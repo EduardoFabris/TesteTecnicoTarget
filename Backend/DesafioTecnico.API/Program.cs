@@ -7,6 +7,7 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<ComissaoService>();
+builder.Services.AddScoped<EstoqueService>();
 
 var app = builder.Build();
 
