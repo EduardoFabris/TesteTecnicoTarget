@@ -203,12 +203,128 @@ async function carregarComissoes() {
     atualizarListaVendas();
 }
 
+
+async function carregarEstoque() {
+    conteudo.innerHTML = `
+        <h2>Movimentação de estoque</h2>
+        <p>Registre entradas e saídas de produtos.</p>
+
+        <form id="formEstoque">
+            <div class="campo-formulario">
+                <label for="codigoProduto">Código do produto</label>
+                <select id="codigoProduto" required>
+                    <option value="">Selecione um produto</option>
+                    <option value="101">101 - Caneta Azul</option>
+                    <option value="102">102 - Caderno Universitário</option>
+                </select>
+            </div>
+
+            <div class="campo-formulario">
+                <label for="tipoMovimentacao">Tipo de movimentação</label>
+                <select id="tipoMovimentacao" required>
+                    <option value="">Selecione o tipo</option>
+                    <option value="Entrada">Entrada</option>
+                    <option value="Saida">Saída</option>
+                </select>
+            </div>
+
+            <div class="campo-formulario">
+                <label for="descricaoEstoque">Descrição</label>
+                <input
+                    type="text"
+                    id="descricaoEstoque"
+                    placeholder="Ex.: Reposição de mercadoria"
+                    required
+                >
+            </div>
+
+            <div class="campo-formulario">
+                <label for="quantidadeEstoque">Quantidade</label>
+                <input
+                    type="number"
+                    id="quantidadeEstoque"
+                    min="1"
+                    step="1"
+                    placeholder="Ex.: 10"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="botao-primario">
+                Registrar movimentação
+            </button>
+        </form>
+
+        <div id="resultadoEstoque"></div>
+    `;
+
+    const formulario = document.querySelector("#formEstoque");
+    const resultado = document.querySelector("#resultadoEstoque");
+
+    formulario.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+
+        const movimentacao = {
+            codigoProduto: Number(
+                document.querySelector("#codigoProduto").value
+            ),
+            tipoMovimentacao: document.querySelector("#tipoMovimentacao").value,
+            descricao: document.querySelector("#descricaoEstoque").value.trim(),
+            quantidade: Number(
+                document.querySelector("#quantidadeEstoque").value
+            )
+        };
+
+        resultado.innerHTML = "<p>Registrando movimentação...</p>";
+
+        try {
+            const resposta = await fetch("http://localhost:5031/api/Estoque", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(movimentacao)
+            });
+
+            const dados = await resposta.json();
+
+            if (!resposta.ok) {
+                throw new Error(
+                    dados.mensagem || "Não foi possível registrar a movimentação."
+                );
+            }
+
+            resultado.innerHTML = `
+                <h3>Movimentação registrada!</h3>
+                <p><strong>Produto:</strong> ${dados.descricaoProduto}</p>
+                <p><strong>Código:</strong> ${dados.codigoProduto}</p>
+                <p><strong>Tipo:</strong> ${dados.tipoMovimentacao}</p>
+                <p><strong>Quantidade movimentada:</strong> ${dados.quantidade}</p>
+                <p><strong>Estoque atual:</strong> ${dados.estoqueAtual}</p>
+            `;
+
+            formulario.reset();
+        } catch (erro) {
+            resultado.innerHTML = `
+                <p class="mensagem-erro">${erro.message}</p>
+            `;
+
+            console.error(erro);
+        }
+    });
+}
+
 botoesNavegacao.forEach((botao) => {
     botao.addEventListener("click", () => {
         const nomeTela = botao.dataset.tela;
 
         if (nomeTela === "comissao") {
             carregarComissoes();
+            return;
+        }
+
+        if (nomeTela === "estoque") {
+            carregarEstoque();
             return;
         }
 
