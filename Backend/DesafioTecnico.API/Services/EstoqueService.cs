@@ -1,53 +1,25 @@
 using DesafioTecnico.API.Models;
+using DesafioTecnico.API.Data;
 using DesafioTecnico.API.DTOs;
 
 namespace DesafioTecnico.API.Services;
 
 public class EstoqueService
 {
-    private readonly List<Produto> _produtos = new()
+    private readonly EstoqueDbContext _context;
+
+    public EstoqueService(EstoqueDbContext context)
     {
-        new Produto
-        {
-            CodigoProduto = 101,
-            DescricaoProduto = "Caneta Azul",
-            Estoque = 150
-        },
-        new Produto
-        {
-            CodigoProduto = 102,
-            DescricaoProduto = "Caderno Universitário",
-            Estoque = 75
-        },
-        new Produto
-        {
-            CodigoProduto = 103,
-            DescricaoProduto = "Borracha Branca",
-            Estoque = 200
-        },
-        new Produto
-        {
-            CodigoProduto = 104,
-            DescricaoProduto = "Lápis Preto HB",
-            Estoque = 320
-        },
-        new Produto
-        {
-            CodigoProduto = 105,
-            DescricaoProduto = "Marcador de Texto Amarelo",
-            Estoque = 90
-        }
-    };
-
-    private readonly List<MovimentacaoEstoque> _movimentacoes = new();
-
-    private int _proximoId = 1;
+        _context = context;
+    }
 
     public Produto? BuscarProduto(int codigoProduto)
     {
-        return _produtos.FirstOrDefault(p => p.CodigoProduto == codigoProduto);
+        return _context.Produtos
+            .FirstOrDefault(p => p.CodigoProduto == codigoProduto);
     }
 
+    
     public MovimentacaoEstoque MovimentarEstoque(MovimentacaoEstoqueDTO movimentacao)
     {
         var produto = BuscarProduto(movimentacao.CodigoProduto);
@@ -55,6 +27,11 @@ public class EstoqueService
         if (produto == null)
         {
             throw new Exception("Produto não encontrado.");
+        }
+
+        if (movimentacao.Quantidade <= 0)
+        {
+            throw new Exception("A quantidade deve ser maior que zero.");
         }
 
         if (movimentacao.TipoMovimentacao.Equals("Entrada", StringComparison.OrdinalIgnoreCase))
@@ -77,7 +54,6 @@ public class EstoqueService
 
         var novaMovimentacao = new MovimentacaoEstoque
         {
-            Id = _proximoId++,
             CodigoProduto = movimentacao.CodigoProduto,
             DescricaoProduto = produto.DescricaoProduto,
             TipoMovimentacao = movimentacao.TipoMovimentacao,
@@ -86,7 +62,9 @@ public class EstoqueService
             EstoqueAtual = produto.Estoque
         };
 
-        _movimentacoes.Add(novaMovimentacao);
+        _context.MovimentacoesEstoque.Add(novaMovimentacao);
+
+        _context.SaveChanges();
 
         return novaMovimentacao;
     }
