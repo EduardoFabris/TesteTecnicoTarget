@@ -314,6 +314,133 @@ async function carregarEstoque() {
     });
 }
 
+
+async function carregarJuros() {
+    conteudo.innerHTML = `
+        <h2>Cálculo de juros</h2>
+        <p>Informe o valor original e a data de vencimento para calcular os juros por atraso.</p>
+
+        <form id="formJuros">
+            <div class="campo-formulario">
+                <label for="valorOriginal">Valor original (R$)</label>
+                <input
+                    type="number"
+                    id="valorOriginal"
+                    min="0.01"
+                    step="0.01"
+                    placeholder="Ex.: 1000.00"
+                    required
+                >
+            </div>
+
+            <div class="campo-formulario">
+                <label for="dataVencimento">Data de vencimento</label>
+                <input
+                    type="date"
+                    id="dataVencimento"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="botao-primario">
+                Calcular juros
+            </button>
+        </form>
+
+        <div id="resultadoJuros"></div>
+    `;
+
+    const formulario = document.querySelector("#formJuros");
+    const resultado = document.querySelector("#resultadoJuros");
+
+    formulario.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+
+        const valorOriginal = Number(
+            document.querySelector("#valorOriginal").value
+        );
+
+        const dataVencimento = document.querySelector("#dataVencimento").value;
+
+        const calculo = {
+            valorOriginal,
+            dataVencimento: `${dataVencimento}T00:00:00`
+        };
+
+        resultado.innerHTML = "<p>Calculando juros...</p>";
+
+        try {
+            const resposta = await fetch(
+                "http://localhost:5031/api/Juros/calcular",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(calculo)
+                }
+            );
+
+            const dados = await resposta.json();
+
+            if (!resposta.ok) {
+                throw new Error(
+                    dados.mensagem ||
+                    "Não foi possível realizar o cálculo."
+                );
+            }
+
+            const formatarMoeda = (valor) =>
+                valor.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL"
+                });
+
+            const dataFormatada = new Date(
+                `${dados.dataVencimento.slice(0, 10)}T12:00:00`
+            ).toLocaleDateString("pt-BR");
+
+            resultado.innerHTML = `
+                <h3>Resultado do cálculo</h3>
+
+                <div class="resultado-juros">
+                    <p>
+                        <strong>Valor original:</strong>
+                        ${formatarMoeda(dados.valorOriginal)}
+                    </p>
+
+                    <p>
+                        <strong>Data de vencimento:</strong>
+                        ${dataFormatada}
+                    </p>
+
+                    <p>
+                        <strong>Dias de atraso:</strong>
+                        ${dados.diasAtraso}
+                    </p>
+
+                    <p>
+                        <strong>Valor dos juros:</strong>
+                        ${formatarMoeda(dados.valorJuros)}
+                    </p>
+
+                    <p class="valor-total">
+                        <strong>Valor total:</strong>
+                        ${formatarMoeda(dados.valorTotal)}
+                    </p>
+                </div>
+            `;
+
+        } catch (erro) {
+            resultado.innerHTML = `
+                <p class="mensagem-erro">${erro.message}</p>
+            `;
+
+            console.error(erro);
+        }
+    });
+}
+
 botoesNavegacao.forEach((botao) => {
     botao.addEventListener("click", () => {
         const nomeTela = botao.dataset.tela;
@@ -325,6 +452,11 @@ botoesNavegacao.forEach((botao) => {
 
         if (nomeTela === "estoque") {
             carregarEstoque();
+            return;
+        }
+
+        if (nomeTela === "juros") {
+            carregarJuros();
             return;
         }
 

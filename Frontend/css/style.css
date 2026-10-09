@@ -207,3 +207,24 @@ body {
 .botao-remover:hover {
     background-color: #fee2e2;
 }
+
+/* Resultado do cálculo de juros */
+.resultado-juros {
+    margin-top: 16px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #f9fafb;
+}
+
+.resultado-juros p {
+    margin-bottom: 12px;
+}
+
+.resultado-juros .valor-total {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #d1d5db;
+    font-size: 18px;
+    color: #b91c1c;
+}
